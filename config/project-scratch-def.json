@@ -1,13 +1,11 @@
 {
-  "orgName": "Demo company",
+  "orgName": "Covu CP CICD",
   "edition": "Developer",
+  "orgCapabilities": ["DigitalExperiences"],
   "features": ["EnableSetPasswordInApi"],
   "settings": {
     "lightningExperienceSettings": {
       "enableS1DesktopEnabled": true
-    },
-    "mobileSettings": {
-      "enableS1EncryptedStoragePref2": false
     }
   }
 }
