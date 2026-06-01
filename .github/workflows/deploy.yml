@@ -1,0 +1,42 @@
+name: Salesforce CI Deployment
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Salesforce CLI
+        run: npm install -g @salesforce/cli
+
+      - name: Write private key
+        run: |
+          echo "${{ secrets.SF_PRIVATE_KEY }}" | base64 --decode > /tmp/server.key
+          chmod 600 /tmp/server.key
+
+      - name: JWT auth
+        run: |
+          sf org login jwt \
+            --client-id "${{ secrets.SF_CLIENT_ID }}" \
+            --jwt-key-file /tmp/server.key \
+            --username "${{ secrets.SF_USERNAME }}" \
+            --instance-url "${{ secrets.SF_INSTANCE_URL }}" \
+            --set-default
+
+      - name: Deploy on push to main
+        if: github.ref == 'refs/heads/main'
+        run: |
+          sf project deploy start \
+            --source-dir force-app \
+            --test-level RunLocalTests
+
+      - name: Cleanup key
+        if: always()
+        run: rm -f /tmp/server.key

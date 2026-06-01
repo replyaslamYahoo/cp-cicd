@@ -1,0 +1,12 @@
+{
+  "activeViewId" : "e4c7d497-330e-48d5-a36b-39d81add513f",
+  "appPageId" : "604475ba-e99d-46b7-9880-6c0a08096106",
+  "configurationTags" : [ ],
+  "devName" : "Insurance_Policy_Detail__c",
+  "id" : "91c6bffb-c9d6-47fd-82ff-fcee2d6b2210",
+  "label" : "Insurance Policy Detail",
+  "objectApiName" : "InsurancePolicy__c",
+  "routeType" : "detail-a09",
+  "type" : "route",
+  "urlPrefix" : "insurancepolicy"
+}

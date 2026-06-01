@@ -1,0 +1,11 @@
+{
+  "cmsSettings" : { },
+  "currentThemeId" : "013d96ce-b7c2-4be3-9f2d-66dfcc03a451",
+  "headMarkup" : "<link rel=\"shortcut icon\" href=\"https://kapeecoffee7-dev-ed.develop.my.site.com/customerportal/resource/1722124884000/favicons/favicon-32x32.png\" />",
+  "id" : "604475ba-e99d-46b7-9880-6c0a08096106",
+  "isLockerServiceEnabled" : true,
+  "isRelaxedCSPLevel" : true,
+  "label" : "main",
+  "templateName" : "CPT Community Template",
+  "type" : "appPage"
+}

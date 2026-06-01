@@ -1,0 +1,34 @@
+.notification-card {
+    height: 30px;
+    width: 100px;
+}
+
+.notification-card .dot {
+    position: relative;
+    top: -7px;
+    left: -5px;
+}
+
+.messages-selected{
+    border-bottom: 2px solid var(--cp-primary-color); 
+}
+
+
+.container {
+    display: flex;
+    
+  }
+  
+.left {
+    flex: 0 0 auto;
+
+}
+
+.new-message-indicator {
+    position: relative; 
+    margin-top: -10%;
+}
+
+.right {
+    flex: 0 0 auto;
+  }

@@ -1,0 +1,150 @@
+// ----------------------------- Script 1: Agencies + Person Accounts + Carriers -----------------------------
+// Run in Execute Anonymous AFTER metadata deploy and Person Accounts is enabled.
+//
+// Demo customer emails use Gmail plus addressing (e.g. you+customer1@gmail.com).
+// Each address is unique in Salesforce, but mail is delivered to you@gmail.com.
+// Change the three addresses below to match your real inbox.
+
+final String DEMO_EMAIL_JANE = 'askaslam+customer1@gmail.com';
+final String DEMO_EMAIL_JOHN = 'askaslam+customer2@gmail.com';
+final String DEMO_EMAIL_EMILY = 'askaslam+customer3@gmail.com';
+
+// Prefer custom Person Account "Customer" RT; fall back to default PersonAccount RT
+Id personAccountRtId;
+for (RecordType rt : [
+    SELECT Id, DeveloperName
+    FROM RecordType
+    WHERE SObjectType = 'Account' AND IsPersonType = true AND IsActive = true
+]) {
+    if (rt.DeveloperName == 'Customer') {
+        personAccountRtId = rt.Id;
+        break;
+    }
+    if (personAccountRtId == null && rt.DeveloperName == 'PersonAccount') {
+        personAccountRtId = rt.Id;
+    }
+}
+System.assertNotEquals(null, personAccountRtId, 'No Person Account record type found. Enable Person Accounts and deploy metadata first.');
+
+Id agencyRtId = [SELECT Id FROM RecordType WHERE SObjectType = 'Account' AND DeveloperName = 'Agency' LIMIT 1].Id;
+
+// Create Agency accounts if missing
+Map<String, Id> agencyMap = new Map<String, Id>();
+for (Account a : [SELECT Id, Name FROM Account WHERE Name IN ('Acme Insurance Agency', 'Horizon Risk Advisors')]) {
+    agencyMap.put(a.Name, a.Id);
+}
+
+List<Account> agenciesToInsert = new List<Account>();
+if (!agencyMap.containsKey('Acme Insurance Agency')) {
+    agenciesToInsert.add(new Account(
+        RecordTypeId = agencyRtId,
+        Name = 'Acme Insurance Agency',
+        Active__c = 'Yes'
+    ));
+}
+if (!agencyMap.containsKey('Horizon Risk Advisors')) {
+    agenciesToInsert.add(new Account(
+        RecordTypeId = agencyRtId,
+        Name = 'Horizon Risk Advisors',
+        Active__c = 'Yes'
+    ));
+}
+if (!agenciesToInsert.isEmpty()) {
+    insert agenciesToInsert;
+    for (Account a : agenciesToInsert) {
+        agencyMap.put(a.Name, a.Id);
+    }
+}
+
+// Create Person Accounts (use FirstName/LastName, not Name)
+List<Account> persons = new List<Account>();
+
+persons.add(new Account(
+    RecordTypeId = personAccountRtId,
+    FirstName = 'Jane',
+    LastName = 'Test Customer',
+    Type__c = 'Customer',
+    Active__c = 'Yes',
+    Active_Customer__c = true,
+    Related_Agency__c = agencyMap.get('Acme Insurance Agency'),
+    PersonEmail = DEMO_EMAIL_JANE,
+    PersonMobilePhone = '+61 400 111 222',
+    BillingStreet = '10 Customer Lane',
+    BillingCity = 'Sydney',
+    BillingState = 'New South Wales',
+    BillingPostalCode = '2010',
+    BillingCountry = 'Australia',
+    Language__c = 'en_US'
+));
+
+persons.add(new Account(
+    RecordTypeId = personAccountRtId,
+    FirstName = 'John',
+    LastName = 'Sample Customer',
+    Type__c = 'Customer',
+    Active__c = 'Yes',
+    Active_Customer__c = true,
+    Related_Agency__c = agencyMap.get('Acme Insurance Agency'),
+    PersonEmail = DEMO_EMAIL_JOHN,
+    PersonMobilePhone = '+61 400 333 444',
+    BillingStreet = '22 Demo Street',
+    BillingCity = 'Sydney',
+    BillingState = 'New South Wales',
+    BillingPostalCode = '2011',
+    BillingCountry = 'Australia',
+    Language__c = 'en_US'
+));
+
+persons.add(new Account(
+    RecordTypeId = personAccountRtId,
+    FirstName = 'Emily',
+    LastName = 'Demo Customer',
+    Type__c = 'Customer',
+    Active__c = 'Yes',
+    Active_Customer__c = true,
+    Related_Agency__c = agencyMap.get('Horizon Risk Advisors'),
+    PersonEmail = DEMO_EMAIL_EMILY,
+    PersonMobilePhone = '+61 400 555 666',
+    BillingStreet = '5 Horizon Avenue',
+    BillingCity = 'Melbourne',
+    BillingState = 'Victoria',
+    BillingPostalCode = '3001',
+    BillingCountry = 'Australia',
+    Language__c = 'en_US'
+));
+
+Database.SaveResult[] results = Database.insert(persons, false);
+for (Integer i = 0; i < results.size(); i++) {
+    if (results[i].isSuccess()) {
+        System.debug('Inserted: ' + persons[i].FirstName + ' ' + persons[i].LastName + ' (Id: ' + results[i].getId() + ')');
+    } else {
+        System.debug('Failed to insert ' + persons[i].FirstName + ' ' + persons[i].LastName);
+        for (Database.Error err : results[i].getErrors()) {
+            System.debug('   Error: ' + err.getStatusCode() + ' - ' + err.getMessage());
+            System.debug('   Fields: ' + err.getFields());
+        }
+    }
+}
+
+// Create Carrier accounts
+Id carrierRtId = [SELECT Id FROM RecordType WHERE SObjectType = 'Account' AND DeveloperName = 'Carrier' LIMIT 1].Id;
+
+Map<String, Id> carrierMap = new Map<String, Id>();
+for (Account a : [SELECT Id, Name FROM Account WHERE RecordType.DeveloperName = 'Carrier' AND Name IN ('QBE Insurance', 'Allianz', 'Suncorp', 'IAG')]) {
+    carrierMap.put(a.Name, a.Id);
+}
+
+List<Account> carriers = new List<Account>();
+for (String carrierName : new List<String>{ 'QBE Insurance', 'Allianz', 'Suncorp', 'IAG' }) {
+    if (!carrierMap.containsKey(carrierName)) {
+        carriers.add(new Account(
+            RecordTypeId = carrierRtId,
+            Name = carrierName,
+            Active__c = 'Yes'
+        ));
+    }
+}
+
+if (!carriers.isEmpty()) {
+    insert carriers;
+}

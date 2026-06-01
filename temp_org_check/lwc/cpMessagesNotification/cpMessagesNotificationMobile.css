@@ -1,0 +1,25 @@
+.messages{ 
+    margin-right: -10px;
+    padding-bottom: 4px;
+    width: 48px;
+    text-align: center;
+}
+
+.messages-selected{
+    border-bottom: 2px solid var(--cp-primary-color);    
+}
+
+.container {
+    display: flex;
+  }
+
+  
+.bell {
+    flex: 0 0 auto;
+  
+}
+  
+.new-message-indicator {
+    flex: 0 0 auto;
+    margin-top: -20%;
+}

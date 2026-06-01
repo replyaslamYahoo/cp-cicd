@@ -1,0 +1,123 @@
+// ----------------------------- Script 2: Insurance Policies -----------------------------
+// Run AFTER Account_insert.txt
+
+Map<String, Id> personAccountByLastName = new Map<String, Id>();
+for (Account a : [
+    SELECT Id, LastName
+    FROM Account
+    WHERE IsPersonAccount = true
+      AND LastName IN ('Test Customer', 'Sample Customer', 'Demo Customer')
+]) {
+    personAccountByLastName.put(a.LastName, a.Id);
+}
+
+Map<Id, Id> contactIdByPersonAccountId = new Map<Id, Id>();
+for (Contact c : [SELECT Id, AccountId FROM Contact WHERE AccountId IN :personAccountByLastName.values()]) {
+    contactIdByPersonAccountId.put(c.AccountId, c.Id);
+}
+
+Map<String, Id> carrierByName = new Map<String, Id>();
+for (Account a : [SELECT Id, Name FROM Account WHERE RecordType.DeveloperName = 'Carrier' AND Name IN ('QBE Insurance', 'Allianz', 'Suncorp', 'IAG')]) {
+    carrierByName.put(a.Name, a.Id);
+}
+
+Id getContactId(String lastName) {
+    Id personAccId = personAccountByLastName.get(lastName);
+    if (personAccId == null) return null;
+    return contactIdByPersonAccountId.get(personAccId);
+}
+
+List<InsurancePolicy__c> policies = new List<InsurancePolicy__c>();
+
+policies.add(new InsurancePolicy__c(
+    Name = 'POL-HOME-0001',
+    NameInsuredId__c = personAccountByLastName.get('Test Customer'),
+    Contact__c = getContactId('Test Customer'),
+    PolicyName__c = 'Home Insurance - Sydney',
+    PolicyType__c = 'Personal',
+    Line_of_Business__c = 'HOME',
+    Status__c = 'Active',
+    Applicant_Status__c = 'Active Client',
+    IsActive__c = true,
+    EffectiveDate__c = Date.newInstance(2025, 1, 1),
+    ExpirationDate__c = Date.newInstance(2026, 1, 1),
+    Carrier__c = carrierByName.get('QBE Insurance'),
+    Writing_Company_Name__c = 'QBE Insurance Australia',
+    NAIC_Code__c = '12345',
+    External_Id__c = 'EXT-HOME-0001',
+    Policy_Master_ID__c = 'MASTER-HOME-0001',
+    Billing_Type__c = 'Direct',
+    Source__c = 'Manual'
+));
+
+policies.add(new InsurancePolicy__c(
+    Name = 'POL-AUTO-0001',
+    NameInsuredId__c = personAccountByLastName.get('Test Customer'),
+    Contact__c = getContactId('Test Customer'),
+    PolicyName__c = 'Auto Insurance - Sedan',
+    PolicyType__c = 'Personal',
+    Line_of_Business__c = 'AUTOP',
+    Status__c = 'Active',
+    Applicant_Status__c = 'Active Client',
+    IsActive__c = true,
+    EffectiveDate__c = Date.newInstance(2025, 3, 1),
+    ExpirationDate__c = Date.newInstance(2026, 3, 1),
+    Carrier__c = carrierByName.get('Allianz'),
+    Writing_Company_Name__c = 'Allianz Australia',
+    NAIC_Code__c = '23456',
+    External_Id__c = 'EXT-AUTO-0001',
+    Policy_Master_ID__c = 'MASTER-AUTO-0001',
+    Billing_Type__c = 'Direct',
+    Source__c = 'Manual'
+));
+
+policies.add(new InsurancePolicy__c(
+    Name = 'POL-AUTO-0002',
+    NameInsuredId__c = personAccountByLastName.get('Sample Customer'),
+    Contact__c = getContactId('Sample Customer'),
+    PolicyName__c = 'Auto Insurance - SUV',
+    PolicyType__c = 'Personal',
+    Line_of_Business__c = 'AUTOP',
+    Status__c = 'Active',
+    Applicant_Status__c = 'Active Client',
+    IsActive__c = true,
+    EffectiveDate__c = Date.newInstance(2025, 6, 1),
+    ExpirationDate__c = Date.newInstance(2026, 6, 1),
+    Carrier__c = carrierByName.get('Suncorp'),
+    Writing_Company_Name__c = 'Suncorp Insurance',
+    NAIC_Code__c = '34567',
+    External_Id__c = 'EXT-AUTO-0002',
+    Policy_Master_ID__c = 'MASTER-AUTO-0002',
+    Billing_Type__c = 'Direct',
+    Source__c = 'Manual'
+));
+
+policies.add(new InsurancePolicy__c(
+    Name = 'POL-HOME-0002',
+    NameInsuredId__c = personAccountByLastName.get('Demo Customer'),
+    Contact__c = getContactId('Demo Customer'),
+    PolicyName__c = 'Home Insurance - Melbourne',
+    PolicyType__c = 'Personal',
+    Line_of_Business__c = 'HOME',
+    Status__c = 'Active',
+    Applicant_Status__c = 'Active Client',
+    IsActive__c = true,
+    EffectiveDate__c = Date.newInstance(2025, 4, 15),
+    ExpirationDate__c = Date.newInstance(2026, 4, 15),
+    Carrier__c = carrierByName.get('IAG'),
+    Writing_Company_Name__c = 'IAG Australia',
+    NAIC_Code__c = '45678',
+    External_Id__c = 'EXT-HOME-0002',
+    Policy_Master_ID__c = 'MASTER-HOME-0002',
+    Billing_Type__c = 'Direct',
+    Source__c = 'Manual'
+));
+
+for (InsurancePolicy__c pol : policies) {
+    try {
+        insert pol;
+        System.debug('Inserted: ' + pol.Name);
+    } catch (Exception e) {
+        System.debug('Failed to insert ' + pol.Name + ': ' + e.getMessage());
+    }
+}

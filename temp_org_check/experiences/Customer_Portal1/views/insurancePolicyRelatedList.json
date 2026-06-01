@@ -1,0 +1,39 @@
+{
+  "appPageId" : "604475ba-e99d-46b7-9880-6c0a08096106",
+  "componentName" : "siteforce:sldsOneColLayout",
+  "dataProviders" : [ ],
+  "id" : "543ee0af-e82d-4b74-84c8-3ccfba59ede8",
+  "label" : "Insurance Policy Related List",
+  "regions" : [ {
+    "id" : "3d752a06-2630-47a0-ad44-639469cce33b",
+    "regionName" : "header",
+    "type" : "region"
+  }, {
+    "components" : [ {
+      "componentAttributes" : {
+        "customTitle" : "",
+        "parentRecordId" : "{!recordId}",
+        "relatedListName" : "{!relationshipApiName}",
+        "showBreadCrumbs" : true,
+        "showCustomTitle" : false,
+        "showManualRefreshButton" : true,
+        "showRowNumbers" : true
+      },
+      "componentName" : "forceCommunity:relatedList",
+      "id" : "44537e78-7d3d-4f00-ba88-c409a3c2f9e5",
+      "renderPriority" : "NEUTRAL",
+      "renditionMap" : { },
+      "type" : "component"
+    } ],
+    "id" : "15219d41-5e27-461e-b94a-d48b635ed220",
+    "regionName" : "content",
+    "type" : "region"
+  }, {
+    "id" : "94e08b9d-e621-45a6-b898-6e3edc7fbc74",
+    "regionName" : "footer",
+    "type" : "region"
+  } ],
+  "themeLayoutType" : "Inner",
+  "type" : "view",
+  "viewType" : "relatedlist-a09"
+}
