@@ -1,7 +1,6 @@
 {
   "orgName": "Covu CP CICD",
   "edition": "Developer",
-  "orgCapabilities": ["DigitalExperiences"],
   "features": ["EnableSetPasswordInApi"],
   "settings": {
     "lightningExperienceSettings": {
