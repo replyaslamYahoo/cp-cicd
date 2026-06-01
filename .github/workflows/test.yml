@@ -1,0 +1,39 @@
+name: Deploy to Test Org
+
+on:
+  push:
+    branches: [ test ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Salesforce CLI
+        run: npm install -g @salesforce/cli
+
+      - name: Write private key
+        run: |
+          echo "${{ secrets.SF_PRIVATE_KEY_TEST }}" | base64 --decode > /tmp/server.key
+          chmod 600 /tmp/server.key
+
+      - name: JWT auth
+        run: |
+          sf org login jwt \
+            --client-id "${{ secrets.SF_CLIENT_ID_TEST }}" \
+            --jwt-key-file /tmp/server.key \
+            --username "${{ secrets.SF_USERNAME_TEST }}" \
+            --instance-url "${{ secrets.SF_INSTANCE_URL_TEST }}" \
+            --set-default
+
+      - name: Deploy
+        run: |
+          sf project deploy start \
+            --source-dir force-app \
+            --test-level RunLocalTests
+
+      - name: Cleanup
+        if: always()
+        run: rm -f /tmp/server.key

@@ -1,10 +1,8 @@
-name: Salesforce CI Deployment
+name: Deploy to Dev Org
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    branches: [ develop ]
 
 jobs:
   deploy:
@@ -30,13 +28,12 @@ jobs:
             --instance-url "${{ secrets.SF_INSTANCE_URL }}" \
             --set-default
 
-      - name: Deploy on push to main
-        if: github.ref == 'refs/heads/main'
+      - name: Deploy
         run: |
           sf project deploy start \
             --source-dir force-app \
             --test-level RunLocalTests
 
-      - name: Cleanup key
+      - name: Cleanup
         if: always()
         run: rm -f /tmp/server.key
