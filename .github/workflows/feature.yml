@@ -5,7 +5,7 @@ on:
     branches: [ develop ]
 
 jobs:
-  scratch-org-ci:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -14,39 +14,18 @@ jobs:
       - name: Install Salesforce CLI
         run: npm install -g @salesforce/cli
 
-      - name: Authenticate to Dev Hub
+      - name: Authenticate to Dev scratch org
         run: |
-          echo "${{ secrets.SFDX_AUTH_URL_DEVHUB }}" > /tmp/devhub.txt
-          sf org login sfdx-url --sfdx-url-file /tmp/devhub.txt --set-default --alias devhub
-          rm /tmp/devhub.txt
+          echo "${{ secrets.SFDX_AUTH_URL_DEV }}" > /tmp/dev.txt
+          sf org login sfdx-url --sfdx-url-file /tmp/dev.txt --set-default
+          rm /tmp/dev.txt
 
-      - name: Create scratch org
+      - name: Validate deploy (no scratch org creation)
         run: |
-          sf org create scratch \
-            --definition-file config/project-scratch-def.json \
-            --alias ci-scratch \
-            --duration-days 1 \
-            --set-default \
-            --target-dev-hub devhub
-
-      - name: Deploy to scratch org
-        run: |
-          sf project deploy start \
+          sf project deploy validate \
             --source-dir force-app \
-            --target-org ci-scratch
-
-      - name: Run Apex tests
-        run: |
-          sf apex run test \
-            --target-org ci-scratch \
-            --test-level RunLocalTests \
-            --synchronous \
-            --result-format human
-
-      - name: Delete scratch org
-        if: always()
-        run: sf org delete scratch --no-prompt --target-org ci-scratch
+            --test-level RunLocalTests
 
       - name: Cleanup
         if: always()
-        run: rm -f /tmp/devhub.txt
+        run: rm -f /tmp/dev.txt
