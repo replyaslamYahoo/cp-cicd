@@ -6,6 +6,9 @@ public without sharing class AccountController {
         // Update users Account language
         Account currentAccount = new Account(Id = accountId);
         currentAccount.Language__c = selectedLanguage;
+
+        //test1
         update currentAccount;  
+
     }
 }
