@@ -21,3 +21,32 @@ jobs:
           rm /tmp/devhub.txt
 
       - name: Create scratch org
+        run: |
+          sf org create scratch \
+            --definition-file config/project-scratch-def.json \
+            --alias ci-scratch \
+            --duration-days 1 \
+            --set-default \
+            --target-dev-hub devhub
+
+      - name: Deploy to scratch org
+        run: |
+          sf project deploy start \
+            --source-dir force-app \
+            --target-org ci-scratch
+
+      - name: Run Apex tests
+        run: |
+          sf apex run test \
+            --target-org ci-scratch \
+            --test-level RunLocalTests \
+            --synchronous \
+            --result-format human
+
+      - name: Delete scratch org
+        if: always()
+        run: sf org delete scratch --no-prompt --target-org ci-scratch
+
+      - name: Cleanup
+        if: always()
+        run: rm -f /tmp/devhub.txt
