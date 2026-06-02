@@ -14,19 +14,11 @@ jobs:
       - name: Install Salesforce CLI
         run: npm install -g @salesforce/cli
 
-      - name: Write private key
+      - name: Authenticate to Dev scratch org
         run: |
-          echo "${{ secrets.SF_PRIVATE_KEY }}" | base64 --decode > /tmp/server.key
-          chmod 600 /tmp/server.key
-
-      - name: JWT auth
-        run: |
-          sf org login jwt \
-            --client-id "${{ secrets.SF_CLIENT_ID }}" \
-            --jwt-key-file /tmp/server.key \
-            --username "${{ secrets.SF_USERNAME }}" \
-            --instance-url "${{ secrets.SF_INSTANCE_URL }}" \
-            --set-default
+          echo "${{ secrets.SFDX_AUTH_URL_DEV }}" > /tmp/dev.txt
+          sf org login sfdx-url --sfdx-url-file /tmp/dev.txt --set-default
+          rm /tmp/dev.txt
 
       - name: Deploy
         run: |
@@ -36,4 +28,4 @@ jobs:
 
       - name: Cleanup
         if: always()
-        run: rm -f /tmp/server.key
+        run: rm -f /tmp/dev.txt

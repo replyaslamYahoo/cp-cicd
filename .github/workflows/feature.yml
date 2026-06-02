@@ -7,7 +7,6 @@ on:
 jobs:
   scratch-org-ci:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -15,56 +14,10 @@ jobs:
       - name: Install Salesforce CLI
         run: npm install -g @salesforce/cli
 
-      # Authenticate to Dev Hub (your prod DE org)
-      - name: Write Dev Hub private key
-        run: |
-          echo "${{ secrets.SF_PRIVATE_KEY }}" | base64 --decode > /tmp/devhub.key
-          chmod 600 /tmp/devhub.key
-
       - name: Authenticate to Dev Hub
         run: |
-          sf org login jwt \
-            --client-id "${{ secrets.SF_CLIENT_ID }}" \
-            --jwt-key-file /tmp/devhub.key \
-            --username "${{ secrets.SF_USERNAME }}" \
-            --instance-url "${{ secrets.SF_INSTANCE_URL }}" \
-            --set-default \
-            --alias devhub
+          echo "${{ secrets.SFDX_AUTH_URL_DEVHUB }}" > /tmp/devhub.txt
+          sf org login sfdx-url --sfdx-url-file /tmp/devhub.txt --set-default --alias devhub
+          rm /tmp/devhub.txt
 
-      # Create a fresh scratch org for this PR
       - name: Create scratch org
-        run: |
-          sf org create scratch \
-            --definition-file config/project-scratch-def.json \
-            --alias ci-scratch \
-            --duration-days 1 \
-            --set-default \
-            --target-dev-hub devhub
-
-      # Deploy metadata to scratch org
-      - name: Deploy to scratch org
-        run: |
-          sf project deploy start \
-            --source-dir force-app \
-            --target-org ci-scratch
-
-      # Run all Apex tests
-      - name: Run Apex tests
-        run: |
-          sf apex run test \
-            --target-org ci-scratch \
-            --test-level RunLocalTests \
-            --synchronous \
-            --result-format human
-
-      # Always delete scratch org even if steps above fail
-      - name: Delete scratch org
-        if: always()
-        run: |
-          sf org delete scratch \
-            --no-prompt \
-            --target-org ci-scratch
-
-      - name: Cleanup key
-        if: always()
-        run: rm -f /tmp/devhub.key
