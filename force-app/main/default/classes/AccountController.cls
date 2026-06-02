@@ -8,6 +8,7 @@ public without sharing class AccountController {
         currentAccount.Language__c = selectedLanguage;
 
         //test1
+        //test2
         update currentAccount;  
 
     }
