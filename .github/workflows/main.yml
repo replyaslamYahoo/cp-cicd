@@ -1,0 +1,46 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production        # ← requires manual approval in GitHub
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Salesforce CLI
+        run: npm install -g @salesforce/cli
+
+      - name: Write private key
+        run: |
+          echo "${{ secrets.SF_PRIVATE_KEY_PROD }}" | base64 --decode > /tmp/server.key
+          chmod 600 /tmp/server.key
+
+      - name: JWT auth
+        run: |
+          sf org login jwt \
+            --client-id "${{ secrets.SF_CLIENT_ID_PROD }}" \
+            --jwt-key-file /tmp/server.key \
+            --username "${{ secrets.SF_USERNAME_PROD }}" \
+            --instance-url "${{ secrets.SF_INSTANCE_URL_PROD }}" \
+            --set-default
+
+      - name: Validate
+        run: |
+          sf project deploy validate \
+            --source-dir force-app \
+            --test-level RunAllTestsInOrg
+
+      - name: Deploy
+        run: |
+          sf project deploy start \
+            --source-dir force-app \
+            --test-level RunAllTestsInOrg
+
+      - name: Cleanup
+        if: always()
+        run: rm -f /tmp/server.key

@@ -1,0 +1,31 @@
+name: Deploy to UAT Org
+
+on:
+  push:
+    branches: [ uat ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Salesforce CLI
+        run: npm install -g @salesforce/cli
+
+      - name: Authenticate to UAT1 org
+        run: |
+          echo "${{ secrets.SFDX_AUTH_URL_UAT1 }}" > /tmp/uat.txt
+          sf org login sfdx-url --sfdx-url-file /tmp/uat.txt --set-default
+          rm /tmp/uat.txt
+
+      - name: Deploy
+        run: |
+          sf project deploy start \
+            --source-dir force-app \
+            --test-level RunAllTestsInOrg
+
+      - name: Cleanup
+        if: always()
+        run: rm -f /tmp/uat.txt
