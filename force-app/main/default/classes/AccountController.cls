@@ -1,7 +1,7 @@
 // pipeline promotion - v1
 public without sharing class AccountController {
     @future
-    //Test1
+    //Test1, Test2
     // This method is called from the UserController class
     // and its called in the future because the Account update is slow
     public static void updateLanguage(Id accountId, String selectedLanguage){
