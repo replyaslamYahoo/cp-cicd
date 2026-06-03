@@ -1,5 +1,6 @@
 //change1, change2, change3
 //change4, change5
+// delta deployment test
 public without sharing class DemoAccountQuery {
     public Account getById(Id accountId) {
         List<Account> accounts = [
