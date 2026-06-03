@@ -11,9 +11,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Install Salesforce CLI
         run: npm install -g @salesforce/cli
+
+      - name: Install sfdx-git-delta
+        run: echo y | sf plugins install sfdx-git-delta
 
       - name: Write private key
         run: |
@@ -29,17 +34,44 @@ jobs:
             --instance-url "${{ secrets.SF_INSTANCE_URL }}" \
             --set-default
 
-      - name: Validate
+      - name: Generate delta package
         run: |
-          sf project deploy validate \
-            --source-dir force-app \
-            --test-level RunAllTestsInOrg
+          mkdir -p delta
+          sf sgd source delta \
+            --from HEAD~1 \
+            --to HEAD \
+            --output-dir delta/ \
+            --source-dir force-app
 
-      - name: Deploy
+      - name: Validate delta deploy
         run: |
-          sf project deploy start \
-            --source-dir force-app \
-            --test-level RunAllTestsInOrg
+          if [ -s delta/package/package.xml ]; then
+            sf project deploy validate \
+              --manifest delta/package/package.xml \
+              --test-level RunAllTestsInOrg
+          else
+            echo "No changes detected — skipping validation"
+          fi
+
+      - name: Deploy delta
+        run: |
+          if [ -s delta/package/package.xml ]; then
+            sf project deploy start \
+              --manifest delta/package/package.xml \
+              --test-level RunAllTestsInOrg
+          else
+            echo "No changes detected — skipping deploy"
+          fi
+
+      - name: Deploy destructive changes
+        run: |
+          if [ -s delta/destructiveChanges/destructiveChanges.xml ]; then
+            sf project deploy start \
+              --manifest delta/destructiveChanges/destructiveChanges.xml \
+              --test-level NoTestRun
+          else
+            echo "No destructive changes"
+          fi
 
       - name: Cleanup
         if: always()
