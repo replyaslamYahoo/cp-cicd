@@ -14,26 +14,18 @@ jobs:
       - name: Install Salesforce CLI
         run: npm install -g @salesforce/cli
 
-      - name: Write private key
+      - name: Authenticate to UAT1 org
         run: |
-          echo "${{ secrets.SF_PRIVATE_KEY_UAT }}" | base64 --decode > /tmp/server.key
-          chmod 600 /tmp/server.key
-
-      - name: JWT auth
-        run: |
-          sf org login jwt \
-            --client-id "${{ secrets.SF_CLIENT_ID_UAT }}" \
-            --jwt-key-file /tmp/server.key \
-            --username "${{ secrets.SF_USERNAME_UAT }}" \
-            --instance-url "${{ secrets.SF_INSTANCE_URL_UAT }}" \
-            --set-default
+          echo "${{ secrets.SFDX_AUTH_URL_UAT1 }}" > /tmp/uat.txt
+          sf org login sfdx-url --sfdx-url-file /tmp/uat.txt --set-default
+          rm /tmp/uat.txt
 
       - name: Deploy
         run: |
           sf project deploy start \
             --source-dir force-app \
-            --test-level RunLocalTests
+            --test-level RunAllTestsInOrg
 
       - name: Cleanup
         if: always()
-        run: rm -f /tmp/server.key
+        run: rm -f /tmp/uat.txt
