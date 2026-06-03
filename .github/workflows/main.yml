@@ -43,25 +43,27 @@ jobs:
             --output-dir delta/ \
             --source-dir force-app
 
-      - name: Validate delta deploy
+      - name: Validate and capture Deploy ID
+        id: validate
         run: |
           if [ -s delta/package/package.xml ]; then
-            sf project deploy validate \
+            DEPLOY_ID=$(sf project deploy validate \
               --manifest delta/package/package.xml \
-              --test-level RunAllTestsInOrg
+              --test-level RunAllTestsInOrg \
+              --json | jq -r '.result.id')
+            echo "deploy_id=$DEPLOY_ID" >> $GITHUB_OUTPUT
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "Captured Deploy ID: $DEPLOY_ID"
           else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
             echo "No changes detected — skipping validation"
           fi
 
-      - name: Deploy delta
+      - name: Quick Deploy using validated ID
+        if: steps.validate.outputs.has_changes == 'true'
         run: |
-          if [ -s delta/package/package.xml ]; then
-            sf project deploy start \
-              --manifest delta/package/package.xml \
-              --test-level RunAllTestsInOrg
-          else
-            echo "No changes detected — skipping deploy"
-          fi
+          sf project deploy quick \
+            --job-id ${{ steps.validate.outputs.deploy_id }}
 
       - name: Deploy destructive changes
         run: |
