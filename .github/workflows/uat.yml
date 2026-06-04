@@ -1,0 +1,68 @@
+name: Deploy to UAT Org
+
+on:
+  push:
+    branches: [ uat ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: uat
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Salesforce CLI
+        run: npm install -g @salesforce/cli
+
+      - name: Install sfdx-git-delta
+        run: echo y | sf plugins install sfdx-git-delta
+
+      - name: Write private key
+        run: |
+          echo "${{ secrets.SF_PRIVATE_KEY }}" | base64 --decode > /tmp/server.key
+          chmod 600 /tmp/server.key
+
+      - name: JWT auth
+        run: |
+          sf org login jwt \
+            --client-id "${{ secrets.SF_CLIENT_ID }}" \
+            --jwt-key-file /tmp/server.key \
+            --username "${{ secrets.SF_USERNAME }}" \
+            --instance-url "${{ secrets.SF_INSTANCE_URL }}" \
+            --set-default
+
+      - name: Generate delta package
+        run: |
+          mkdir -p delta
+          sf sgd source delta \
+            --from HEAD~1 \
+            --to HEAD \
+            --output-dir delta/ \
+            --source-dir force-app
+
+      - name: Deploy delta
+        run: |
+          if [ -s delta/package/package.xml ]; then
+            sf project deploy start \
+              --manifest delta/package/package.xml \
+              --test-level RunAllTestsInOrg
+          else
+            echo "No changes detected — skipping deploy"
+          fi
+
+      - name: Deploy destructive changes
+        run: |
+          if [ -s delta/destructiveChanges/destructiveChanges.xml ]; then
+            sf project deploy start \
+              --manifest delta/destructiveChanges/destructiveChanges.xml \
+              --test-level NoTestRun
+          else
+            echo "No destructive changes"
+          fi
+
+      - name: Cleanup
+        if: always()
+        run: rm -f /tmp/server.key

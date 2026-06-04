@@ -1,0 +1,2 @@
+# Not deployable as org metadata (used only for CLI retrieve/deploy manifests)
+**/package.xml
