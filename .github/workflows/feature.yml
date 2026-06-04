@@ -37,15 +37,25 @@ jobs:
       - name: Generate delta package
         run: |
           mkdir -p delta
+
+          # For PRs, diff against the base branch tip (most accurate delta)
+          BASE_SHA=$(git merge-base HEAD origin/${{ github.base_ref }})
+          echo "Delta from: $BASE_SHA (merge-base with ${{ github.base_ref }}) → HEAD"
+
           sf sgd source delta \
-            --from HEAD~1 \
+            --from "$BASE_SHA" \
             --to HEAD \
             --output-dir delta/ \
             --source-dir force-app
 
+          echo "=== package.xml ==="
+          cat delta/package/package.xml || echo "Not generated"
+          echo "=== destructiveChanges.xml ==="
+          cat delta/destructiveChanges/destructiveChanges.xml || echo "Not generated"
+
       - name: Validate delta deploy
         run: |
-          if [ -s delta/package/package.xml ]; then
+          if [ -s delta/package/package.xml ] && grep -q "<types>" delta/package/package.xml; then
             sf project deploy validate \
               --manifest delta/package/package.xml \
               --test-level RunLocalTests

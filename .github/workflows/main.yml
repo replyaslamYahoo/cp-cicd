@@ -37,16 +37,36 @@ jobs:
       - name: Generate delta package
         run: |
           mkdir -p delta
+
+          # Use github.event.before to get the SHA before this push/merge
+          # This is the correct baseline for delta — not HEAD~1 which breaks on merge commits
+          BEFORE_SHA="${{ github.event.before }}"
+
+          if [ -z "$BEFORE_SHA" ] || [ "$BEFORE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            # First push to branch — fall back to parent commit
+            BEFORE_SHA=$(git rev-parse HEAD~1)
+            echo "First push detected, using HEAD~1: $BEFORE_SHA"
+          else
+            echo "Using before SHA from push event: $BEFORE_SHA"
+          fi
+
+          echo "Delta from: $BEFORE_SHA → HEAD"
+
           sf sgd source delta \
-            --from HEAD~1 \
+            --from "$BEFORE_SHA" \
             --to HEAD \
             --output-dir delta/ \
             --source-dir force-app
 
+          echo "=== package.xml ==="
+          cat delta/package/package.xml || echo "Not generated"
+          echo "=== destructiveChanges.xml ==="
+          cat delta/destructiveChanges/destructiveChanges.xml || echo "Not generated"
+
       - name: Validate and capture Deploy ID
         id: validate
         run: |
-          if [ -s delta/package/package.xml ]; then
+          if [ -s delta/package/package.xml ] && grep -q "<types>" delta/package/package.xml; then
             DEPLOY_ID=$(sf project deploy validate \
               --manifest delta/package/package.xml \
               --test-level RunAllTestsInOrg \
@@ -67,12 +87,12 @@ jobs:
 
       - name: Deploy destructive changes
         run: |
-          if [ -s delta/destructiveChanges/destructiveChanges.xml ]; then
+          if [ -s delta/destructiveChanges/destructiveChanges.xml ] && grep -q "<types>" delta/destructiveChanges/destructiveChanges.xml; then
             sf project deploy start \
               --manifest delta/destructiveChanges/destructiveChanges.xml \
               --test-level NoTestRun
           else
-            echo "No destructive changes"
+            echo "No destructive changes — skipping"
           fi
 
       - name: Cleanup
