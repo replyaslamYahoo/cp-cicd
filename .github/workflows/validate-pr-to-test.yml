@@ -1,13 +1,13 @@
-name: Feature Branch CI
+name: PR Validation - Test
 
 on:
   pull_request:
-    branches: [ develop ]
+    branches: [ test ]
 
 jobs:
   validate:
     runs-on: ubuntu-latest
-    environment: dev
+    environment: test
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -37,8 +37,6 @@ jobs:
       - name: Generate delta package
         run: |
           mkdir -p delta
-
-          # For PRs, diff against the base branch tip (most accurate delta)
           BASE_SHA=$(git merge-base HEAD origin/${{ github.base_ref }})
           echo "Delta from: $BASE_SHA (merge-base with ${{ github.base_ref }}) → HEAD"
 
