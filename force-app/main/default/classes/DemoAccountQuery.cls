@@ -9,4 +9,11 @@ public without sharing class DemoAccountQuery {
         ];
         return accounts.isEmpty() ? null : accounts[0];
     }
+
+    public void doSomethingRisky() {
+        try {
+            Integer x = 1 / 0;
+        } catch (Exception e) {
+        }
+    }
 }
