@@ -26,7 +26,7 @@ jobs:
         if: steps.pmd.outputs.violations != '0'
         run: |
           echo "⚠️ PMD found ${{ steps.pmd.outputs.violations }} violation(s) — see annotations above"
-          # exit 1
+          exit 1
 
   validate:
     runs-on: ubuntu-latest
